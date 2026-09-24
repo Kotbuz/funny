@@ -199,16 +199,15 @@ namespace funny.Controllers
 
                 if (!string.IsNullOrWhiteSpace(request.Filter))
                 {
-                    string filterLower = request.Filter.ToLower();
-                    query = query.Where(s => s.Name.ToLower().Contains(filterLower)
-                                          || s.Description.ToLower().Contains(filterLower));
+                    string filterPattern = $"%{request.Filter.Trim()}%";
+                    query = query.Where(s => EF.Functions.Like(s.Name, filterPattern)
+                                          || EF.Functions.Like(s.Description, filterPattern));
                 }
 
                 query = request.Sorted?.ToLower() switch
                 {
-                    "name_desc" => query.OrderByDescending(s => s.Name),
-                    "price_asc" => query.OrderBy(s => s.Price),
-                    "price_desc" => query.OrderByDescending(s => s.Price),
+                    "descending" => query.OrderByDescending(s => s.Name),
+                    "ascending" => query.OrderBy(s => s.Name),
                     _ => query.OrderBy(s => s.Name)
                 };
 
