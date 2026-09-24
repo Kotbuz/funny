@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace funny.Controllers
 {
@@ -16,18 +19,17 @@ namespace funny.Controllers
     {
         private static readonly List<ConnectDialogColaVM> _ColaOrdersDbInMemory = new List<ConnectDialogColaVM>();
         private static readonly List<ConnectDialogPizzaVM> _PizzaOrdersDbInMemory = new List<ConnectDialogPizzaVM>();
-        private static long _ColaCurrentId = 1; 
+        private static long _ColaCurrentId = 1;
         private static long _PizzaCurrentId = 1;
 
         private readonly ILogger<StrangeDataController> _logger;
-        private readonly AppDbContext _context; 
+        private readonly AppDbContext _context;
 
         public StrangeDataController(ILogger<StrangeDataController> logger, AppDbContext context)
         {
             _logger = logger;
             _context = context;
         }
-
 
         [HttpPost("SendCola")]
         public IActionResult SendCola([FromBody] ConnectDialogColaVM colaVM)
@@ -39,11 +41,51 @@ namespace funny.Controllers
                 colaVM.Tasty, colaVM.Volume, colaVM.Name, colaVM.Phone);
 
             colaVM.Id = _ColaCurrentId++;
-
             _ColaOrdersDbInMemory.Add(colaVM);
 
             return Ok(colaVM.Id);
         }
+
+        [HttpGet("GetAllCola")]
+        public IActionResult GetAllCola()
+        {
+            return Ok(_ColaOrdersDbInMemory);
+        }
+
+        [HttpGet("GetCola/{id}")]
+        public IActionResult GetCola(long id)
+        {
+            var cola = _ColaOrdersDbInMemory.FirstOrDefault(c => c.Id == id);
+            if (cola == null) return NotFound("Заказ колы не найден.");
+            return Ok(cola);
+        }
+
+        [HttpPut("UpdateCola/{id}")]
+        public IActionResult UpdateCola(long id, [FromBody] ConnectDialogColaVM updatedCola)
+        {
+            var cola = _ColaOrdersDbInMemory.FirstOrDefault(c => c.Id == id);
+            if (cola == null) return NotFound("Заказ колы не найден.");
+
+            cola.Tasty = updatedCola.Tasty;
+            cola.Volume = updatedCola.Volume;
+            cola.Name = updatedCola.Name;
+            cola.Phone = updatedCola.Phone;
+
+            _logger.LogInformation("Обновлен заказ колы с ID {Id}", id);
+            return Ok(cola);
+        }
+
+        [HttpDelete("DeleteCola/{id}")]
+        public IActionResult DeleteCola(long id)
+        {
+            var cola = _ColaOrdersDbInMemory.FirstOrDefault(c => c.Id == id);
+            if (cola == null) return NotFound("Заказ колы не найден.");
+
+            _ColaOrdersDbInMemory.Remove(cola);
+            _logger.LogInformation("Удален заказ колы с ID {Id}", id);
+            return Ok(new { message = $"Заказ колы с ID {id} успешно удален." });
+        }
+
         [HttpPost("SendPizza")]
         public IActionResult SendPizza([FromBody] ConnectDialogPizzaVM pizzaVM)
         {
@@ -54,34 +96,49 @@ namespace funny.Controllers
                 pizzaVM.Size, pizzaVM.Options, pizzaVM.Thickness);
 
             pizzaVM.Id = _PizzaCurrentId++;
-
             _PizzaOrdersDbInMemory.Add(pizzaVM);
 
             return Ok(pizzaVM.Id);
         }
-        [HttpPost("HelpPolice")]
-        public IActionResult HelpPolice([FromBody] ConnectDialogPolice? request)
-        {
-            string userAgent = Request.Headers["User-Agent"].ToString();
 
-            _logger.LogInformation("Поступил запрос на вызов полиции. User-Agent: {UserAgent}", userAgent);
-            bool isChrome = userAgent.Contains("Chrome")
-                            && !userAgent.Contains("Edg")
-                            && !userAgent.Contains("OPR");
-            if (isChrome)
-            {
-                _logger.LogWarning("Пользователь использует Chrome. Полиция выехала!");
-                return Ok(new { message = "Помощь уже в пути. Полиция выехала к пользователю Chrome!" });
-            }
-            else
-            {
-                _logger.LogInformation("В помощи отказано: пользователь сидит не через Chrome.");
-                return BadRequest(new { message = "Отказано в помощи. Мы помогаем только пользователям Chrome." });
-            }
+        [HttpGet("GetAllPizza")]
+        public IActionResult GetAllPizza()
+        {
+            return Ok(_PizzaOrdersDbInMemory);
         }
 
+        [HttpGet("GetPizza/{id}")]
+        public IActionResult GetPizza(long id)
+        {
+            var pizza = _PizzaOrdersDbInMemory.FirstOrDefault(p => p.Id == id);
+            if (pizza == null) return NotFound("Заказ пиццы не найден.");
+            return Ok(pizza);
+        }
 
+        [HttpPut("UpdatePizza/{id}")]
+        public IActionResult UpdatePizza(long id, [FromBody] ConnectDialogPizzaVM updatedPizza)
+        {
+            var pizza = _PizzaOrdersDbInMemory.FirstOrDefault(p => p.Id == id);
+            if (pizza == null) return NotFound("Заказ пиццы не найден.");
 
+            pizza.Size = updatedPizza.Size;
+            pizza.Options = updatedPizza.Options;
+            pizza.Thickness = updatedPizza.Thickness;
+
+            _logger.LogInformation("Обновлен заказ пиццы с ID {Id}", id);
+            return Ok(pizza);
+        }
+
+        [HttpDelete("DeletePizza/{id}")]
+        public IActionResult DeletePizza(long id)
+        {
+            var pizza = _PizzaOrdersDbInMemory.FirstOrDefault(p => p.Id == id);
+            if (pizza == null) return NotFound("Заказ пиццы не найден.");
+
+            _PizzaOrdersDbInMemory.Remove(pizza);
+            _logger.LogInformation("Удален заказ пиццы с ID {Id}", id);
+            return Ok(new { message = $"Заказ пиццы с ID {id} успешно удален." });
+        }
 
         [HttpPost("CreateService")]
         public async Task<IActionResult> CreateService([FromBody] DigitalService service)
@@ -90,6 +147,21 @@ namespace funny.Controllers
 
             _context.DigitalServices.Add(service);
             await _context.SaveChangesAsync();
+            return Ok(service);
+        }
+
+        [HttpGet("GetAllServicesJson")]
+        public async Task<IActionResult> GetAllServicesJson()
+        {
+            var services = await _context.DigitalServices.ToListAsync();
+            return Ok(services);
+        }
+
+        [HttpGet("GetService/{id}")]
+        public async Task<IActionResult> GetService(long id)
+        {
+            var service = await _context.DigitalServices.FindAsync(id);
+            if (service == null) return NotFound("Услуга не найдена.");
             return Ok(service);
         }
 
@@ -118,15 +190,6 @@ namespace funny.Controllers
             return Ok(new { message = $"Услуга с ID {id} успешно удалена." });
         }
 
-        [HttpGet("GetAllServicesJson")]
-        public async Task<IActionResult> GetAllServicesJson()
-        {
-            var services = await _context.DigitalServices.ToListAsync();
-            return Ok(services);
-        }
-
-
-        // Маршрут: /StrangeData/GetDigitalList
         [HttpGet("GetDigitalList")]
         public async Task<IActionResult> GetDigitalList([FromQuery] DigitalListRequest request)
         {
@@ -146,7 +209,7 @@ namespace funny.Controllers
                     "name_desc" => query.OrderByDescending(s => s.Name),
                     "price_asc" => query.OrderBy(s => s.Price),
                     "price_desc" => query.OrderByDescending(s => s.Price),
-                    _ => query.OrderBy(s => s.Name) 
+                    _ => query.OrderBy(s => s.Name)
                 };
 
                 var services = await query.ToListAsync();
@@ -181,9 +244,21 @@ namespace funny.Controllers
             }
         }
 
+        [HttpPost("HelpPolice")]
+        public IActionResult HelpPolice([FromBody] ConnectDialogPolice? request)
+        {
+            string userAgent = Request.Headers["User-Agent"].ToString();
 
-
-
-
+            _logger.LogInformation("Поступил запрос на вызов полиции. User-Agent: {UserAgent}", userAgent);
+            bool isChrome = userAgent.Contains("Chrome")
+                            && !userAgent.Contains("Edg")
+                            && !userAgent.Contains("OPR");
+            if (isChrome)
+            {
+                _logger.LogWarning("Пользователь использует Chrome. Полиция выехала!");
+                return Ok(new { message = "Помощь уже в пути. Полиция выехала к пользователю Chrome!" });
+            }
+            else { _logger.LogInformation("В помощи отказано: пользователь сидит не через Chrome."); return BadRequest(new { message = "Отказано в помощи. Мы помогаем только пользователям Chrome." }); }
+        }
     }
 }
