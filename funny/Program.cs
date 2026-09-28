@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using funny.Data;
+using funny.Logic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddTransient<IOldSexLogic, OldSexLogic>();
 
 var app = builder.Build();
 
@@ -36,9 +39,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Joke}/{action=GetJoke}");
+
 
 using (var scope = app.Services.CreateScope())
 {
