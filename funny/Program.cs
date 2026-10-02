@@ -35,6 +35,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=joke}/{action=Index}/{id?}");
+
 app.UseAuthorization();
 
 app.MapControllers();
