@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css?family=Barlow|Major+Mono+Display');
+﻿@import url('https://googleapis.com|Major+Mono+Display');
 
 body {
     display: flex;
@@ -14,17 +14,30 @@ main {
     display: flex;
     flex-direction: column;
     margin-top: 100px;
+    /* Фиксируем ширину контейнера, чтобы верстка была по центру */
+    width: 100%;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 h6, h3, h1, button {
     font-family: 'Barlow', sans-serif;
 }
 
+/* Измененный блок для фиксации области текста */
 h1 {
-    font-size: 70px;
-    margin: 0;
+    font-size: 28px; /* Уменьшили размер шрифта (было 70px) */
+    margin: 20px 0;
     position: relative;
-    bottom: 15px;
+    /* Фиксированная область: */
+    height: 120px; /* Кнопка больше не сдвинется, высота всегда 120px */
+    display: flex;
+    align-items: center; /* Центрируем текст по вертикали внутри области */
+    justify-content: center; /* Центрируем текст по горизонтали */
+
+    overflow-y: auto; /* Если шутка очень длинная, появится аккуратная прокрутка */
+    padding: 0 10px;
 }
 
 h6 {
@@ -44,6 +57,7 @@ button {
     align-self: center;
     color: black;
     transition: 5ms background-color, color;
+    cursor: pointer; /* Добавили курсор-руку при наведении */
 }
 
 .red, .red button, .green, .green button {
