@@ -102,6 +102,12 @@ namespace funny.Logic
         {
             _logger = logger;
         }
+        public async Task<string> GetJoke(bool sex, int old)
+        {
+            var tsex = sex ? 0 : 1;
+            var joke = jokes.Where(e => e.sexRange.Contains(tsex)).Where(e => e.oldRange.Min() <= old && e.oldRange.Max() >= old).FirstOrDefault().text;
+            return joke ?? string.Empty;
+        }
         public async Task<IEnumerable<string>> GetJokes(bool?[] sex, int?[] old)
         {
             var tsex = sex.Select(s => s.HasValue ? (s.Value ? 0 : 1) : 0);
@@ -110,6 +116,12 @@ namespace funny.Logic
                     .Any(a => tsex.Contains(a)))
                 .Where(e => e.oldRange.Min() <= old.Min() && e.oldRange.Max() >= old.Max())
                 ?.Select(e => e.text).ToArray() ?? [];
+        }
+        public async Task<IEnumerable<string>> GetAllJokes()
+        {
+            var AllJokes = (from joke in jokes select joke.text).ToList();
+            return AllJokes;
+                
         }
 
 
